@@ -1,7 +1,7 @@
 AUTOMATED DIABETES PREPROCESSING REPORT
 ==================================================
 Author: alpian_khairi_C1BO
-Generated: 2025-07-03 11:03:25.734748
+Generated: 2025-07-03 04:16:21.722367
 
 ORIGINAL DATA:
   Shape: (100000, 9)
@@ -21,7 +21,7 @@ CATEGORICAL FEATURES:
 VALIDATION RESULTS:
   Accuracy: 0.9691
   Validation: PASSED
-  Top 5 features: [('HbA1c_level', 0.3926119497939353), ('blood_glucose_level', 0.3211475549055219), ('bmi', 0.1232182114375823), ('age', 0.10519766712851836), ('smoking_history', 0.02681212961311873)]
+  Top 5 features: [('HbA1c_level', np.float64(0.3926119497939353)), ('blood_glucose_level', np.float64(0.3211475549055219)), ('bmi', np.float64(0.1232182114375823)), ('age', np.float64(0.10519766712851836)), ('smoking_history', np.float64(0.02681212961311873))]
 
 PREPROCESSING STEPS APPLIED:
   [x] Data loading and validation
