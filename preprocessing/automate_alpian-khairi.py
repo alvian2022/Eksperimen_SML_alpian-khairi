@@ -1,19 +1,18 @@
 """
-Automated Data Preprocessing Pipeline
+Automated Data Preprocessing Pipeline for Diabetes Prediction Dataset
 Author: alpian_khairi_C1BO
-Description: Automated preprocessing for Iris dataset
+Description: Automated preprocessing for diabetes prediction dataset
 """
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import os
 import logging
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 import joblib
 
 # Setup logging
@@ -21,50 +20,57 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('preprocessing.log'),
+        logging.FileHandler('diabetes_preprocessing.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
 
-class IrisDataPreprocessor:
+
+class DiabetesDataPreprocessor:
     """
-    Automated data preprocessing class for Iris dataset
+    Automated data preprocessing class for Diabetes prediction dataset
     """
     
     def __init__(self):
         """Initialize the preprocessor"""
         self.scaler = StandardScaler()
-        self.label_encoder = LabelEncoder()
+        self.label_encoders = {}
+        self.one_hot_encoder = OneHotEncoder(sparse_output=False, drop='first')
         self.feature_names = None
-        self.target_mapping = {0: 'setosa', 1: 'versicolor', 2: 'virginica'}
+        self.categorical_features = ['gender', 'smoking_history']
+        self.numerical_features = ['age', 'hypertension', 'heart_disease', 'bmi', 'HbA1c_level', 'blood_glucose_level']
+        self.target_column = 'diabetes'
         
-    def load_data(self, file_path: Optional[str] = None) -> pd.DataFrame:
+    def load_data(self, file_path: str) -> pd.DataFrame:
         """
-        Load dataset from file or sklearn
+        Load diabetes dataset from CSV file
         
         Args:
-            file_path: Path to CSV file (optional)
+            file_path: Path to CSV file
             
         Returns:
             DataFrame: Loaded dataset
         """
         try:
-            if file_path and os.path.exists(file_path):
-                logger.info(f"Loading data from {file_path}")
-                df = pd.read_csv(file_path)
-            else:
-                logger.info("Loading data from sklearn datasets")
-                iris = load_iris()
-                df = pd.DataFrame(iris.data, columns=iris.feature_names)
-                df['species'] = iris.target
-                df['species_name'] = df['species'].map(self.target_mapping)
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Dataset file not found: {file_path}")
                 
-                # Save raw data
-                df.to_csv('data/iris_raw.csv', index=False)
-                logger.info("Raw data saved to data/iris_raw.csv")
+            logger.info(f"Loading data from {file_path}")
+            df = pd.read_csv(file_path)
             
-            self.feature_names = [col for col in df.columns if col not in ['species', 'species_name', 'target']]
+            # Validate required columns
+            required_columns = self.categorical_features + self.numerical_features + [self.target_column]
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                raise ValueError(f"Missing required columns: {missing_columns}")
+            
+            # Save raw data
+            os.makedirs('data', exist_ok=True)
+            df.to_csv('data/diabetes_raw.csv', index=False)
+            logger.info("Raw data saved to data/diabetes_raw.csv")
+            
             logger.info(f"Dataset loaded successfully. Shape: {df.shape}")
             return df
             
@@ -72,7 +78,7 @@ class IrisDataPreprocessor:
             logger.error(f"Error loading data: {str(e)}")
             raise
     
-    def explore_data(self, df: pd.DataFrame) -> dict:
+    def explore_data(self, df: pd.DataFrame) -> Dict:
         """
         Perform basic data exploration
         
@@ -89,14 +95,21 @@ class IrisDataPreprocessor:
             'missing_values': df.isnull().sum().to_dict(),
             'duplicates': df.duplicated().sum(),
             'data_types': df.dtypes.to_dict(),
-            'target_distribution': df['species'].value_counts().to_dict() if 'species' in df.columns else {},
-            'feature_stats': df[self.feature_names].describe().to_dict()
+            'target_distribution': df[self.target_column].value_counts().to_dict(),
+            'categorical_stats': {},
+            'numerical_stats': df[self.numerical_features].describe().to_dict()
         }
+        
+        # Categorical feature analysis
+        for cat_feature in self.categorical_features:
+            if cat_feature in df.columns:
+                exploration_results['categorical_stats'][cat_feature] = df[cat_feature].value_counts().to_dict()
         
         logger.info(f"Exploration completed:")
         logger.info(f"  - Shape: {exploration_results['shape']}")
         logger.info(f"  - Missing values: {sum(exploration_results['missing_values'].values())}")
         logger.info(f"  - Duplicates: {exploration_results['duplicates']}")
+        logger.info(f"  - Target distribution: {exploration_results['target_distribution']}")
         
         return exploration_results
     
@@ -113,36 +126,88 @@ class IrisDataPreprocessor:
         logger.info("Starting data cleaning...")
         
         original_shape = df.shape
+        df_clean = df.copy()
         
         # Handle missing values
-        missing_before = df.isnull().sum().sum()
+        missing_before = df_clean.isnull().sum().sum()
         if missing_before > 0:
             logger.info(f"Found {missing_before} missing values")
+            
             # For numerical columns, fill with median
-            numerical_cols = df.select_dtypes(include=[np.number]).columns
-            df[numerical_cols] = df[numerical_cols].fillna(df[numerical_cols].median())
+            for col in self.numerical_features:
+                if col in df_clean.columns and df_clean[col].isnull().sum() > 0:
+                    median_val = df_clean[col].median()
+                    df_clean[col] = df_clean[col].fillna(median_val)
+                    logger.info(f"  - Filled {col} missing values with median: {median_val:.2f}")
             
             # For categorical columns, fill with mode
-            categorical_cols = df.select_dtypes(include=['object']).columns
-            for col in categorical_cols:
-                df[col] = df[col].fillna(df[col].mode()[0] if not df[col].mode().empty else 'unknown')
+            for col in self.categorical_features:
+                if col in df_clean.columns and df_clean[col].isnull().sum() > 0:
+                    mode_val = df_clean[col].mode()[0] if not df_clean[col].mode().empty else 'unknown'
+                    df_clean[col] = df_clean[col].fillna(mode_val)
+                    logger.info(f"  - Filled {col} missing values with mode: {mode_val}")
         
         # Remove duplicates
-        duplicates_before = df.duplicated().sum()
+        duplicates_before = df_clean.duplicated().sum()
         if duplicates_before > 0:
             logger.info(f"Found {duplicates_before} duplicate rows")
-            df = df.drop_duplicates().reset_index(drop=True)
+            df_clean = df_clean.drop_duplicates().reset_index(drop=True)
         
         # Check for outliers using IQR method
-        outlier_info = self._detect_outliers(df)
+        outlier_info = self._detect_outliers(df_clean)
         logger.info(f"Outlier detection completed: {outlier_info}")
         
-        logger.info(f"Data cleaning completed. Shape: {original_shape} → {df.shape}")
-        return df
+        # Data type validation and cleaning
+        df_clean = self._validate_data_types(df_clean)
+        
+        # Fix: Replace Unicode arrow with ASCII
+        logger.info(f"Data cleaning completed. Shape: {original_shape} -> {df_clean.shape}")
+        return df_clean
     
-    def _detect_outliers(self, df: pd.DataFrame) -> dict:
+    
+    def _validate_data_types(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Detect outliers using IQR method
+        Validate and clean data types
+        
+        Args:
+            df: Input DataFrame
+            
+        Returns:
+            DataFrame: DataFrame with validated data types
+        """
+        df_clean = df.copy()
+        
+        # Ensure categorical columns are strings
+        for col in self.categorical_features:
+            if col in df_clean.columns:
+                df_clean[col] = df_clean[col].astype(str).str.strip().str.lower()
+        
+        # Ensure numerical columns are numeric
+        for col in self.numerical_features:
+            if col in df_clean.columns:
+                df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
+        
+        # Ensure target is integer
+        if self.target_column in df_clean.columns:
+            df_clean[self.target_column] = df_clean[self.target_column].astype(int)
+        
+        # Validate ranges for specific features
+        if 'age' in df_clean.columns:
+            # Age should be positive and reasonable
+            df_clean = df_clean[df_clean['age'] > 0]
+            df_clean = df_clean[df_clean['age'] <= 120]
+        
+        if 'bmi' in df_clean.columns:
+            # BMI should be positive and reasonable
+            df_clean = df_clean[df_clean['bmi'] > 0]
+            df_clean = df_clean[df_clean['bmi'] <= 70]
+        
+        logger.info("Data type validation completed")
+        return df_clean.reset_index(drop=True)
+    
+    def _detect_outliers(self, df: pd.DataFrame) -> Dict:
+        """
+        Detect outliers using IQR method for numerical features
         
         Args:
             df: Input DataFrame
@@ -152,7 +217,7 @@ class IrisDataPreprocessor:
         """
         outlier_info = {}
         
-        for feature in self.feature_names:
+        for feature in self.numerical_features:
             if feature in df.columns:
                 Q1 = df[feature].quantile(0.25)
                 Q3 = df[feature].quantile(0.75)
@@ -177,40 +242,47 @@ class IrisDataPreprocessor:
         """
         logger.info("Starting feature engineering...")
         
+        df_processed = df.copy()
+        
         # Separate features and target
-        X = df[self.feature_names].copy()
+        X = df_processed.drop(columns=[self.target_column])
+        y = df_processed[self.target_column]
         
-        # Handle target column
-        if 'target' in df.columns:
-            y = df['target']
-        elif 'species' in df.columns:
-            y = df['species']
-        else:
-            raise ValueError("No target column found (expected 'target' or 'species')")
+        # Handle categorical features with label encoding
+        X_encoded = X.copy()
+        for cat_feature in self.categorical_features:
+            if cat_feature in X_encoded.columns:
+                self.label_encoders[cat_feature] = LabelEncoder()
+                X_encoded[cat_feature] = self.label_encoders[cat_feature].fit_transform(X_encoded[cat_feature])
+                
+                # Fixed: Properly handle multi-line f-string
+                encoding_map = dict(zip(
+                    self.label_encoders[cat_feature].classes_, 
+                    self.label_encoders[cat_feature].transform(self.label_encoders[cat_feature].classes_)
+                ))
+                logger.info(f"Label encoded {cat_feature}: {encoding_map}")
         
-        # Scale features
-        logger.info("Scaling features using StandardScaler...")
-        X_scaled = self.scaler.fit_transform(X)
-        X_scaled_df = pd.DataFrame(X_scaled, columns=self.feature_names)
+        # Scale numerical features
+        logger.info("Scaling numerical features using StandardScaler...")
+        numerical_data = X_encoded[self.numerical_features]
+        numerical_scaled = self.scaler.fit_transform(numerical_data)
         
-        # Encode target if needed
-        if y.dtype == 'object' or y.dtype.name == 'category':
-            logger.info("Encoding target labels...")
-            y_encoded = self.label_encoder.fit_transform(y)
-            y = pd.Series(y_encoded, name='target')
+        # Combine scaled numerical and encoded categorical features
+        X_final = X_encoded.copy()
+        X_final[self.numerical_features] = numerical_scaled
         
-        # Add feature statistics
+        # Feature statistics
         feature_stats = {
-            'original_ranges': {col: (X[col].min(), X[col].max()) for col in X.columns},
-            'scaled_ranges': {col: (X_scaled_df[col].min(), X_scaled_df[col].max()) for col in X_scaled_df.columns}
+            'original_ranges': {col: (X[col].min(), X[col].max()) for col in self.numerical_features if col in X.columns},
+            'scaled_ranges': {col: (X_final[col].min(), X_final[col].max()) for col in self.numerical_features if col in X_final.columns}
         }
         
         logger.info("Feature engineering completed")
-        logger.info(f"Feature ranges after scaling: {feature_stats['scaled_ranges']}")
+        logger.info(f"Final feature columns: {list(X_final.columns)}")
         
-        return X_scaled_df, y
+        return X_final, y
     
-    def validate_preprocessing(self, X: pd.DataFrame, y: pd.Series) -> dict:
+    def validate_preprocessing(self, X: pd.DataFrame, y: pd.Series) -> Dict:
         """
         Validate preprocessing quality with a quick model test
         
@@ -237,18 +309,23 @@ class IrisDataPreprocessor:
             y_pred = model.predict(X_test)
             accuracy = accuracy_score(y_test, y_pred)
             
-            # Generate classification report with proper target names
-            # FIX: Convert numpy integers to strings for target_names
-            target_names = [str(cls) for cls in self.label_encoder.classes_]
+            # Generate classification report
+            target_names = ['No Diabetes', 'Diabetes']
             class_report = classification_report(y_test, y_pred, target_names=target_names, output_dict=True)
             
             validation_results = {
                 'accuracy': accuracy,
                 'classification_report': class_report,
-                'validation_successful': True
+                'validation_successful': True,
+                'feature_importance': dict(zip(X.columns, model.feature_importances_))
             }
             
             logger.info(f"Validation completed successfully. Accuracy: {accuracy:.4f}")
+            
+            # Log feature importance
+            top_features = sorted(validation_results['feature_importance'].items(), key=lambda x: x[1], reverse=True)[:5]
+            logger.info(f"Top 5 important features: {top_features}")
+            
             return validation_results
             
         except Exception as e:
@@ -272,7 +349,7 @@ class IrisDataPreprocessor:
         try:
             # Combine features and target
             processed_df = X.copy()
-            processed_df['target'] = y
+            processed_df[self.target_column] = y
             
             # Create output directory if it doesn't exist
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -283,8 +360,11 @@ class IrisDataPreprocessor:
             # Save preprocessing objects for future use
             preprocessing_objects = {
                 'scaler': self.scaler,
-                'label_encoder': self.label_encoder,
-                'feature_names': self.feature_names
+                'label_encoders': self.label_encoders,
+                'feature_names': list(X.columns),
+                'categorical_features': self.categorical_features,
+                'numerical_features': self.numerical_features,
+                'target_column': self.target_column
             }
             
             objects_path = output_path.replace('.csv', '_objects.pkl')
@@ -298,19 +378,19 @@ class IrisDataPreprocessor:
             raise
     
     def preprocess_pipeline(self, 
-                          input_path: Optional[str] = None, 
-                          output_path: str = "preprocessing/iris_preprocessing.csv") -> pd.DataFrame:
+                          input_path: str, 
+                          output_path: str = "preprocessing/diabetes_preprocessed.csv") -> pd.DataFrame:
         """
         Complete preprocessing pipeline
         
         Args:
-            input_path: Input file path (optional, uses sklearn if None)
+            input_path: Input file path
             output_path: Output file path
             
         Returns:
             DataFrame: Preprocessed dataset
         """
-        logger.info("=== Starting Automated Preprocessing Pipeline ===")
+        logger.info("=== Starting Automated Diabetes Preprocessing Pipeline ===")
         logger.info(f"Author: alpian_khairi_C1BO")
         
         try:
@@ -334,7 +414,7 @@ class IrisDataPreprocessor:
             
             # Step 7: Create final dataset
             final_df = X_processed.copy()
-            final_df['target'] = y_processed
+            final_df[self.target_column] = y_processed
             
             # Step 8: Generate summary report
             self._generate_summary_report(exploration_results, final_df, output_path, validation_results)
@@ -346,8 +426,8 @@ class IrisDataPreprocessor:
             logger.error(f"Pipeline failed: {str(e)}")
             raise
     
-    def _generate_summary_report(self, exploration_results: dict, final_df: pd.DataFrame, 
-                               output_path: str, validation_results: dict) -> None:
+    def _generate_summary_report(self, exploration_results: Dict, final_df: pd.DataFrame, 
+                           output_path: str, validation_results: Dict) -> None:
         """
         Generate preprocessing summary report
         
@@ -359,8 +439,9 @@ class IrisDataPreprocessor:
         """
         report_path = output_path.replace('.csv', '_report.txt')
         
-        with open(report_path, 'w') as f:
-            f.write("AUTOMATED PREPROCESSING REPORT\n")
+        # Fix: Use UTF-8 encoding for file writing
+        with open(report_path, 'w', encoding='utf-8') as f:
+            f.write("AUTOMATED DIABETES PREPROCESSING REPORT\n")
             f.write("="*50 + "\n")
             f.write(f"Author: alpian_khairi_C1BO\n")
             f.write(f"Generated: {pd.Timestamp.now()}\n\n")
@@ -368,29 +449,43 @@ class IrisDataPreprocessor:
             f.write("ORIGINAL DATA:\n")
             f.write(f"  Shape: {exploration_results['shape']}\n")
             f.write(f"  Missing values: {sum(exploration_results['missing_values'].values())}\n")
-            f.write(f"  Duplicates: {exploration_results['duplicates']}\n\n")
+            f.write(f"  Duplicates: {exploration_results['duplicates']}\n")
+            f.write(f"  Target distribution: {exploration_results['target_distribution']}\n\n")
             
             f.write("PROCESSED DATA:\n")
             f.write(f"  Final shape: {final_df.shape}\n")
             f.write(f"  Features: {list(final_df.columns[:-1])}\n")
-            f.write(f"  Target distribution: {final_df['target'].value_counts().to_dict()}\n\n")
+            f.write(f"  Target distribution: {final_df[self.target_column].value_counts().to_dict()}\n\n")
+            
+            f.write("CATEGORICAL FEATURES:\n")
+            for cat_feature in self.categorical_features:
+                if cat_feature in exploration_results['categorical_stats']:
+                    f.write(f"  {cat_feature}: {exploration_results['categorical_stats'][cat_feature]}\n")
+            f.write("\n")
             
             f.write("VALIDATION RESULTS:\n")
             if validation_results['validation_successful']:
                 f.write(f"  Accuracy: {validation_results['accuracy']:.4f}\n")
-                f.write(f"  Validation: PASSED\n\n")
+                f.write(f"  Validation: PASSED\n")
+                if 'feature_importance' in validation_results:
+                    top_features = sorted(validation_results['feature_importance'].items(), 
+                                        key=lambda x: x[1], reverse=True)[:5]
+                    f.write(f"  Top 5 features: {top_features}\n")
+                f.write("\n")
             else:
                 f.write(f"  Validation: FAILED\n")
                 f.write(f"  Error: {validation_results.get('error', 'Unknown error')}\n\n")
             
             f.write("PREPROCESSING STEPS APPLIED:\n")
-            f.write("  ✓ Data loading\n")
-            f.write("  ✓ Missing value handling\n")
-            f.write("  ✓ Duplicate removal\n")
-            f.write("  ✓ Outlier detection\n")
-            f.write("  ✓ Feature scaling (StandardScaler)\n")
-            f.write("  ✓ Target encoding\n")
-            f.write("  ✓ Data validation\n")
+            # Fix: Replace Unicode checkmarks with ASCII
+            f.write("  [x] Data loading and validation\n")
+            f.write("  [x] Missing value handling\n")
+            f.write("  [x] Duplicate removal\n")
+            f.write("  [x] Data type validation\n")
+            f.write("  [x] Outlier detection\n")
+            f.write("  [x] Categorical encoding (Label Encoding)\n")
+            f.write("  [x] Numerical feature scaling (StandardScaler)\n")
+            f.write("  [x] Data validation with ML model\n")
         
         logger.info(f"Summary report saved to: {report_path}")
 
@@ -402,30 +497,36 @@ def main():
     os.makedirs('preprocessing', exist_ok=True)
     
     # Initialize preprocessor
-    preprocessor = IrisDataPreprocessor()
+    preprocessor = DiabetesDataPreprocessor()
     
     # Run preprocessing pipeline
     try:
-        # Check if raw data exists, otherwise use sklearn
-        input_file = "data/iris_raw.csv" if os.path.exists("data/iris_raw.csv") else None
+        # Use the diabetes dataset file
+        input_file = "diabetes_prediction_dataset.csv"
+        
+        if not os.path.exists(input_file):
+            print(f"ERROR: Dataset file '{input_file}' not found!")
+            print("Please ensure the diabetes prediction dataset CSV file is in the current directory.")
+            return
         
         processed_data = preprocessor.preprocess_pipeline(
             input_path=input_file,
-            output_path="preprocessing/iris_preprocessing.csv"
+            output_path="preprocessing/diabetes_preprocessed.csv"
         )
         
         print("\n" + "="*60)
-        print("PREPROCESSING COMPLETED SUCCESSFULLY!")
+        print("DIABETES PREPROCESSING COMPLETED SUCCESSFULLY!")
         print("="*60)
         print(f"Final dataset shape: {processed_data.shape}")
         print(f"Features: {list(processed_data.columns[:-1])}")
-        print(f"Target classes: {sorted(processed_data['target'].unique())}")
-        print(f"Output saved to: preprocessing/iris_preprocessing.csv")
-        print("Files generated:")
-        print("  - preprocessing/iris_preprocessing.csv")
-        print("  - preprocessing/iris_preprocessing_objects.pkl")
-        print("  - preprocessing/iris_preprocessing_report.txt")
-        print("  - preprocessing.log")
+        print(f"Target classes: {sorted(processed_data['diabetes'].unique())}")
+        print(f"Target distribution: {processed_data['diabetes'].value_counts().to_dict()}")
+        print(f"Output saved to: preprocessing/diabetes_preprocessed.csv")
+        print("\nFiles generated:")
+        print("  - preprocessing/diabetes_preprocessed.csv")
+        print("  - preprocessing/diabetes_preprocessed_objects.pkl")
+        print("  - preprocessing/diabetes_preprocessed_report.txt")
+        print("  - diabetes_preprocessing.log")
         
     except Exception as e:
         print(f"ERROR: Preprocessing failed - {str(e)}")

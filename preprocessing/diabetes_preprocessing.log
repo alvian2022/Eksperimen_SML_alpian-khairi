@@ -1,0 +1,57 @@
+2025-07-03 10:45:12,379 - INFO - === Starting Automated Diabetes Preprocessing Pipeline ===
+2025-07-03 10:45:12,379 - INFO - Author: alpian_khairi_C1BO
+2025-07-03 10:45:12,381 - INFO - Loading data from diabetes_prediction_dataset.csv
+2025-07-03 10:45:14,204 - INFO - Raw data saved to data/diabetes_raw.csv
+2025-07-03 10:45:14,206 - INFO - Dataset loaded successfully. Shape: (100000, 9)
+2025-07-03 10:45:14,209 - INFO - Performing data exploration...
+2025-07-03 10:45:14,440 - INFO - Exploration completed:
+2025-07-03 10:45:14,440 - INFO -   - Shape: (100000, 9)
+2025-07-03 10:45:14,440 - INFO -   - Missing values: 0
+2025-07-03 10:45:14,440 - INFO -   - Duplicates: 3854
+2025-07-03 10:45:14,440 - INFO -   - Target distribution: {0: 91500, 1: 8500}
+2025-07-03 10:45:14,440 - INFO - Starting data cleaning...
+2025-07-03 10:45:14,529 - INFO - Found 3854 duplicate rows
+2025-07-03 10:45:14,626 - INFO - Outlier detection completed: {'age': 0, 'hypertension': 7461, 'heart_disease': 3923, 'bmi': 5354, 'HbA1c_level': 1312, 'blood_glucose_level': 2031}
+2025-07-03 10:45:14,836 - INFO - Data type validation completed
+2025-07-03 10:45:14,908 - INFO - Starting feature engineering...
+2025-07-03 10:45:15,001 - INFO - Label encoded gender: {'female': 0, 'male': 1, 'other': 2}
+2025-07-03 10:45:15,055 - INFO - Label encoded smoking_history: {'current': 0, 'ever': 1, 'former': 2, 'never': 3, 'no info': 4, 'not current': 5}
+2025-07-03 10:45:15,055 - INFO - Scaling numerical features using StandardScaler...
+2025-07-03 10:45:15,154 - INFO - Feature engineering completed
+2025-07-03 10:45:15,156 - INFO - Final feature columns: ['gender', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level']
+2025-07-03 10:45:15,167 - INFO - Starting preprocessing validation...
+2025-07-03 10:45:29,355 - INFO - Validation completed successfully. Accuracy: 0.9691
+2025-07-03 10:45:29,355 - INFO - Top 5 important features: [('HbA1c_level', 0.3926119497939353), ('blood_glucose_level', 0.3211475549055219), ('bmi', 0.1232182114375823), ('age', 0.10519766712851836), ('smoking_history', 0.02681212961311873)]
+2025-07-03 10:45:31,557 - INFO - Preprocessed data saved to: preprocessing/diabetes_preprocessed.csv
+2025-07-03 10:45:31,557 - INFO - Preprocessing objects saved to: preprocessing/diabetes_preprocessed_objects.pkl
+2025-07-03 10:45:31,584 - ERROR - Pipeline failed: 'charmap' codec can't encode character '\u2713' in position 2: character maps to <undefined>
+2025-07-03 10:45:31,585 - ERROR - Preprocessing failed: 'charmap' codec can't encode character '\u2713' in position 2: character maps to <undefined>
+2025-07-03 10:53:06,776 - INFO - === Starting Automated Diabetes Preprocessing Pipeline ===
+2025-07-03 10:53:06,776 - INFO - Author: alpian_khairi_C1BO
+2025-07-03 10:53:06,779 - INFO - Loading data from diabetes_prediction_dataset.csv
+2025-07-03 10:53:08,307 - INFO - Raw data saved to data/diabetes_raw.csv
+2025-07-03 10:53:08,307 - INFO - Dataset loaded successfully. Shape: (100000, 9)
+2025-07-03 10:53:08,307 - INFO - Performing data exploration...
+2025-07-03 10:53:08,494 - INFO - Exploration completed:
+2025-07-03 10:53:08,494 - INFO -   - Shape: (100000, 9)
+2025-07-03 10:53:08,494 - INFO -   - Missing values: 0
+2025-07-03 10:53:08,494 - INFO -   - Duplicates: 3854
+2025-07-03 10:53:08,494 - INFO -   - Target distribution: {0: 91500, 1: 8500}
+2025-07-03 10:53:08,494 - INFO - Starting data cleaning...
+2025-07-03 10:53:08,586 - INFO - Found 3854 duplicate rows
+2025-07-03 10:53:08,690 - INFO - Outlier detection completed: {'age': 0, 'hypertension': 7461, 'heart_disease': 3923, 'bmi': 5354, 'HbA1c_level': 1312, 'blood_glucose_level': 2031}
+2025-07-03 10:53:08,864 - INFO - Data type validation completed
+2025-07-03 10:53:08,873 - INFO - Data cleaning completed. Shape: (100000, 9) -> (96127, 9)
+2025-07-03 10:53:08,873 - INFO - Starting feature engineering...
+2025-07-03 10:53:08,931 - INFO - Label encoded gender: {'female': 0, 'male': 1, 'other': 2}
+2025-07-03 10:53:08,975 - INFO - Label encoded smoking_history: {'current': 0, 'ever': 1, 'former': 2, 'never': 3, 'no info': 4, 'not current': 5}
+2025-07-03 10:53:08,977 - INFO - Scaling numerical features using StandardScaler...
+2025-07-03 10:53:09,034 - INFO - Feature engineering completed
+2025-07-03 10:53:09,034 - INFO - Final feature columns: ['gender', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level']
+2025-07-03 10:53:09,044 - INFO - Starting preprocessing validation...
+2025-07-03 10:53:23,399 - INFO - Validation completed successfully. Accuracy: 0.9691
+2025-07-03 10:53:23,399 - INFO - Top 5 important features: [('HbA1c_level', 0.3926119497939353), ('blood_glucose_level', 0.3211475549055219), ('bmi', 0.1232182114375823), ('age', 0.10519766712851836), ('smoking_history', 0.02681212961311873)]
+2025-07-03 10:53:25,200 - INFO - Preprocessed data saved to: preprocessing/diabetes_preprocessed.csv
+2025-07-03 10:53:25,200 - INFO - Preprocessing objects saved to: preprocessing/diabetes_preprocessed_objects.pkl
+2025-07-03 10:53:25,265 - INFO - Summary report saved to: preprocessing/diabetes_preprocessed_report.txt
+2025-07-03 10:53:25,265 - INFO - === Preprocessing Pipeline Completed Successfully ===
