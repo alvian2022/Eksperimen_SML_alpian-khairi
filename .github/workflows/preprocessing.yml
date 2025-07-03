@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas numpy scikit-learn
+        pip install pandas numpy scikit-learn joblib
     
     - name: Run preprocessing
       run: |
@@ -32,6 +32,10 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add preprocessing/diabetes_preprocessing.csv
-        git diff --staged --quiet || git commit -m "Update preprocessed data"
+        git add preprocessing/diabetes_preprocessed.csv
+        git add preprocessing/diabetes_preprocessed_objects.pkl
+        git add preprocessing/diabetes_preprocessed_report.txt
+        git add diabetes_preprocessing.log
+        git add data/diabetes_raw.csv
+        git diff --staged --quiet || git commit -m "Update preprocessed data and artifacts"
         git push
