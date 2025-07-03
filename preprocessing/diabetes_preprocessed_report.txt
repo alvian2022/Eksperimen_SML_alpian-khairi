@@ -1,0 +1,34 @@
+AUTOMATED DIABETES PREPROCESSING REPORT
+==================================================
+Author: alpian_khairi_C1BO
+Generated: 2025-07-03 11:03:25.734748
+
+ORIGINAL DATA:
+  Shape: (100000, 9)
+  Missing values: 0
+  Duplicates: 3854
+  Target distribution: {0: 91500, 1: 8500}
+
+PROCESSED DATA:
+  Final shape: (96127, 9)
+  Features: ['gender', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level']
+  Target distribution: {0: 87651, 1: 8476}
+
+CATEGORICAL FEATURES:
+  gender: {'Female': 58552, 'Male': 41430, 'Other': 18}
+  smoking_history: {'No Info': 35816, 'never': 35095, 'former': 9352, 'current': 9286, 'not current': 6447, 'ever': 4004}
+
+VALIDATION RESULTS:
+  Accuracy: 0.9691
+  Validation: PASSED
+  Top 5 features: [('HbA1c_level', 0.3926119497939353), ('blood_glucose_level', 0.3211475549055219), ('bmi', 0.1232182114375823), ('age', 0.10519766712851836), ('smoking_history', 0.02681212961311873)]
+
+PREPROCESSING STEPS APPLIED:
+  [x] Data loading and validation
+  [x] Missing value handling
+  [x] Duplicate removal
+  [x] Data type validation
+  [x] Outlier detection
+  [x] Categorical encoding (Label Encoding)
+  [x] Numerical feature scaling (StandardScaler)
+  [x] Data validation with ML model

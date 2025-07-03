@@ -502,7 +502,7 @@ def main():
     # Run preprocessing pipeline
     try:
         # Use the diabetes dataset file
-        input_file = "diabetes_prediction_dataset.csv"
+        input_file = "data/diabetes_raw.csv"
         
         if not os.path.exists(input_file):
             print(f"ERROR: Dataset file '{input_file}' not found!")
