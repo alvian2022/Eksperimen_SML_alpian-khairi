@@ -282,60 +282,60 @@ class DiabetesDataPreprocessor:
         
         return X_final, y
     
-    def validate_preprocessing(self, X: pd.DataFrame, y: pd.Series) -> Dict:
-        """
-        Validate preprocessing quality with a quick model test
+    # def validate_preprocessing(self, X: pd.DataFrame, y: pd.Series) -> Dict:
+    #     """
+    #     Validate preprocessing quality with a quick model test
         
-        Args:
-            X: Features DataFrame
-            y: Target Series
+    #     Args:
+    #         X: Features DataFrame
+    #         y: Target Series
             
-        Returns:
-            dict: Validation results
-        """
-        logger.info("Starting preprocessing validation...")
+    #     Returns:
+    #         dict: Validation results
+    #     """
+    #     logger.info("Starting preprocessing validation...")
         
-        try:
-            # Split data for validation
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=y
-            )
+    #     try:
+    #         # Split data for validation
+    #         X_train, X_test, y_train, y_test = train_test_split(
+    #             X, y, test_size=0.2, random_state=42, stratify=y
+    #         )
             
-            # Train a simple model
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
-            model.fit(X_train, y_train)
+    #         # Train a simple model
+    #         model = RandomForestClassifier(n_estimators=100, random_state=42)
+    #         model.fit(X_train, y_train)
             
-            # Make predictions
-            y_pred = model.predict(X_test)
-            accuracy = accuracy_score(y_test, y_pred)
+    #         # Make predictions
+    #         y_pred = model.predict(X_test)
+    #         accuracy = accuracy_score(y_test, y_pred)
             
-            # Generate classification report
-            target_names = ['No Diabetes', 'Diabetes']
-            class_report = classification_report(y_test, y_pred, target_names=target_names, output_dict=True)
+    #         # Generate classification report
+    #         target_names = ['No Diabetes', 'Diabetes']
+    #         class_report = classification_report(y_test, y_pred, target_names=target_names, output_dict=True)
             
-            validation_results = {
-                'accuracy': accuracy,
-                'classification_report': class_report,
-                'validation_successful': True,
-                'feature_importance': dict(zip(X.columns, model.feature_importances_))
-            }
+    #         validation_results = {
+    #             'accuracy': accuracy,
+    #             'classification_report': class_report,
+    #             'validation_successful': True,
+    #             'feature_importance': dict(zip(X.columns, model.feature_importances_))
+    #         }
             
-            logger.info(f"Validation completed successfully. Accuracy: {accuracy:.4f}")
+    #         logger.info(f"Validation completed successfully. Accuracy: {accuracy:.4f}")
             
-            # Log feature importance
-            top_features = sorted(validation_results['feature_importance'].items(), key=lambda x: x[1], reverse=True)[:5]
-            logger.info(f"Top 5 important features: {top_features}")
+    #         # Log feature importance
+    #         top_features = sorted(validation_results['feature_importance'].items(), key=lambda x: x[1], reverse=True)[:5]
+    #         logger.info(f"Top 5 important features: {top_features}")
             
-            return validation_results
+    #         return validation_results
             
-        except Exception as e:
-            logger.error(f"Validation failed: {str(e)}")
-            return {
-                'accuracy': 0.0,
-                'classification_report': {},
-                'validation_successful': False,
-                'error': str(e)
-            }
+    #     except Exception as e:
+    #         logger.error(f"Validation failed: {str(e)}")
+    #         return {
+    #             'accuracy': 0.0,
+    #             'classification_report': {},
+    #             'validation_successful': False,
+    #             'error': str(e)
+    #         }
     
     def save_preprocessed_data(self, X: pd.DataFrame, y: pd.Series, output_path: str) -> None:
         """
@@ -407,7 +407,7 @@ class DiabetesDataPreprocessor:
             X_processed, y_processed = self.engineer_features(df_clean)
             
             # Step 5: Validate preprocessing quality
-            validation_results = self.validate_preprocessing(X_processed, y_processed)
+            # validation_results = self.validate_preprocessing(X_processed, y_processed)
             
             # Step 6: Save preprocessed data
             self.save_preprocessed_data(X_processed, y_processed, output_path)
@@ -417,7 +417,8 @@ class DiabetesDataPreprocessor:
             final_df[self.target_column] = y_processed
             
             # Step 8: Generate summary report
-            self._generate_summary_report(exploration_results, final_df, output_path, validation_results)
+            # self._generate_summary_report(exploration_results, final_df, output_path, validation_results)
+            self._generate_summary_report(exploration_results, final_df, output_path)
             
             logger.info("=== Preprocessing Pipeline Completed Successfully ===")
             return final_df
@@ -427,7 +428,7 @@ class DiabetesDataPreprocessor:
             raise
     
     def _generate_summary_report(self, exploration_results: Dict, final_df: pd.DataFrame, 
-                           output_path: str, validation_results: Dict) -> None:
+                           output_path: str) -> None:
         """
         Generate preprocessing summary report
         
@@ -463,18 +464,18 @@ class DiabetesDataPreprocessor:
                     f.write(f"  {cat_feature}: {exploration_results['categorical_stats'][cat_feature]}\n")
             f.write("\n")
             
-            f.write("VALIDATION RESULTS:\n")
-            if validation_results['validation_successful']:
-                f.write(f"  Accuracy: {validation_results['accuracy']:.4f}\n")
-                f.write(f"  Validation: PASSED\n")
-                if 'feature_importance' in validation_results:
-                    top_features = sorted(validation_results['feature_importance'].items(), 
-                                        key=lambda x: x[1], reverse=True)[:5]
-                    f.write(f"  Top 5 features: {top_features}\n")
-                f.write("\n")
-            else:
-                f.write(f"  Validation: FAILED\n")
-                f.write(f"  Error: {validation_results.get('error', 'Unknown error')}\n\n")
+            # f.write("VALIDATION RESULTS:\n")
+            # if validation_results['validation_successful']:
+            #     f.write(f"  Accuracy: {validation_results['accuracy']:.4f}\n")
+            #     f.write(f"  Validation: PASSED\n")
+            #     if 'feature_importance' in validation_results:
+            #         top_features = sorted(validation_results['feature_importance'].items(), 
+            #                             key=lambda x: x[1], reverse=True)[:5]
+            #         f.write(f"  Top 5 features: {top_features}\n")
+            #     f.write("\n")
+            # else:
+            #     f.write(f"  Validation: FAILED\n")
+            #     f.write(f"  Error: {validation_results.get('error', 'Unknown error')}\n\n")
             
             f.write("PREPROCESSING STEPS APPLIED:\n")
             # Fix: Replace Unicode checkmarks with ASCII
@@ -485,7 +486,7 @@ class DiabetesDataPreprocessor:
             f.write("  [x] Outlier detection\n")
             f.write("  [x] Categorical encoding (Label Encoding)\n")
             f.write("  [x] Numerical feature scaling (StandardScaler)\n")
-            f.write("  [x] Data validation with ML model\n")
+            # f.write("  [x] Data validation with ML model\n")
         
         logger.info(f"Summary report saved to: {report_path}")
 

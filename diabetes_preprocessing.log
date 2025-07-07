@@ -27,3 +27,29 @@
 2025-07-03 11:03:25,718 - INFO - Preprocessing objects saved to: preprocessing/diabetes_preprocessed_objects.pkl
 2025-07-03 11:03:25,744 - INFO - Summary report saved to: preprocessing/diabetes_preprocessed_report.txt
 2025-07-03 11:03:25,746 - INFO - === Preprocessing Pipeline Completed Successfully ===
+2025-07-08 00:33:05,395 - INFO - === Starting Automated Diabetes Preprocessing Pipeline ===
+2025-07-08 00:33:05,418 - INFO - Author: alpian_khairi_C1BO
+2025-07-08 00:33:05,419 - INFO - Loading data from data/diabetes_raw.csv
+2025-07-08 00:33:06,713 - INFO - Raw data saved to data/diabetes_raw.csv
+2025-07-08 00:33:06,713 - INFO - Dataset loaded successfully. Shape: (100000, 9)
+2025-07-08 00:33:06,715 - INFO - Performing data exploration...
+2025-07-08 00:33:06,845 - INFO - Exploration completed:
+2025-07-08 00:33:06,845 - INFO -   - Shape: (100000, 9)
+2025-07-08 00:33:06,845 - INFO -   - Missing values: 0
+2025-07-08 00:33:06,845 - INFO -   - Duplicates: 3854
+2025-07-08 00:33:06,845 - INFO -   - Target distribution: {0: 91500, 1: 8500}
+2025-07-08 00:33:06,845 - INFO - Starting data cleaning...
+2025-07-08 00:33:06,926 - INFO - Found 3854 duplicate rows
+2025-07-08 00:33:07,046 - INFO - Outlier detection completed: {'age': 0, 'hypertension': 7461, 'heart_disease': 3923, 'bmi': 5354, 'HbA1c_level': 1312, 'blood_glucose_level': 2031}
+2025-07-08 00:33:07,252 - INFO - Data type validation completed
+2025-07-08 00:33:07,257 - INFO - Data cleaning completed. Shape: (100000, 9) -> (96127, 9)
+2025-07-08 00:33:07,257 - INFO - Starting feature engineering...
+2025-07-08 00:33:07,323 - INFO - Label encoded gender: {'female': 0, 'male': 1, 'other': 2}
+2025-07-08 00:33:07,374 - INFO - Label encoded smoking_history: {'current': 0, 'ever': 1, 'former': 2, 'never': 3, 'no info': 4, 'not current': 5}
+2025-07-08 00:33:07,375 - INFO - Scaling numerical features using StandardScaler...
+2025-07-08 00:33:07,449 - INFO - Feature engineering completed
+2025-07-08 00:33:07,450 - INFO - Final feature columns: ['gender', 'age', 'hypertension', 'heart_disease', 'smoking_history', 'bmi', 'HbA1c_level', 'blood_glucose_level']
+2025-07-08 00:33:08,870 - INFO - Preprocessed data saved to: preprocessing/diabetes_preprocessed.csv
+2025-07-08 00:33:08,870 - INFO - Preprocessing objects saved to: preprocessing/diabetes_preprocessed_objects.pkl
+2025-07-08 00:33:08,897 - INFO - Summary report saved to: preprocessing/diabetes_preprocessed_report.txt
+2025-07-08 00:33:08,899 - INFO - === Preprocessing Pipeline Completed Successfully ===
